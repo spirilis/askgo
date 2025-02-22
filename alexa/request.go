@@ -1,5 +1,10 @@
 package alexa
 
+import (
+	"log"
+	"reflect"
+)
+
 // RequestEnvelope is the deserialized http post request sent by alexa.
 type RequestEnvelope struct {
 	Version string  `json:"version"`
@@ -108,4 +113,64 @@ type IntentSlot struct {
 	Value              string      `json:"value"`
 	ConfirmationStatus string      `json:"confirmationStatus,omitempty"`
 	Resolutions        interface{} `json:"resolutions"`
+}
+
+const (
+	SlotValueUnknown = iota
+	SlotValueFound
+	SlotValueNotFound
+	SlotValueUnverified
+)
+
+type SlotResolutionStatus uint
+
+// This function uses Reflection to walk the JSON structure of Resolutions, an interface{}
+// Looks for .resolutionsPerAuthority[0].status.code
+func (i IntentSlot) SlotValueResolution() SlotResolutionStatus {
+	//inspect_rec([]string{}, reflect.ValueOf(i.Resolutions))
+	resPerAuth := reflect.ValueOf(i.Resolutions)
+	if resPerAuth.Kind() != reflect.Map {
+		log.Printf("Resolutions isn't a map [%d]", resPerAuth.Kind())
+		return SlotResolutionStatus(SlotValueUnverified)
+	}
+	rpaArray := reflect.ValueOf(resPerAuth.MapIndex(reflect.ValueOf("resolutionsPerAuthority")).Interface())
+	if rpaArray.Kind() != reflect.Slice {
+		log.Printf("Resolutions[resolutionsPerAuthority] isn't a slice [%d]", rpaArray.Kind())
+	}
+	rpa0 := reflect.ValueOf(rpaArray.Index(0).Interface())
+	if rpa0.Kind() != reflect.Map {
+		log.Printf("Resolutions[resolutionsPerAuthority][0] isn't a map [%d]", rpa0.Kind())
+		return SlotResolutionStatus(SlotValueUnknown)
+	}
+	status := reflect.ValueOf(rpa0.MapIndex(reflect.ValueOf("status")).Interface())
+	if status.Kind() != reflect.Map {
+		log.Printf("Resolutions[resolutionsPerAuthority][0].status isn't a map [%d]", status.Kind())
+		return SlotResolutionStatus(SlotValueUnknown)
+	}
+	code := reflect.ValueOf(status.MapIndex(reflect.ValueOf("code")).Interface())
+	if code.Kind() != reflect.String {
+		log.Printf("Resolutions[resolutionsPerAuthority][0].status.code isn't a string [%d]", code.Kind())
+		return SlotResolutionStatus(SlotValueUnknown)
+	}
+	statusCode := code.String()
+	log.Printf("Status Code: %s", statusCode)
+
+	return SlotResolutionStatusCode(statusCode)
+}
+
+// Check the slot value resolution is ER_SUCCESS_MATCH, or we don't know (Alexa validated it before sending us the request)
+func (i IntentSlot) IsSlotValidValue() bool {
+	sc := i.SlotValueResolution()
+	return sc == SlotResolutionStatus(SlotValueFound) || sc == SlotResolutionStatus(SlotValueUnverified)
+}
+
+func SlotResolutionStatusCode(val string) SlotResolutionStatus {
+	switch val {
+	case "ER_SUCCESS_NO_MATCH":
+		return SlotResolutionStatus(SlotValueNotFound)
+	case "ER_SUCCESS_MATCH":
+		return SlotResolutionStatus(SlotValueFound)
+	default:
+		return SlotResolutionStatus(SlotValueUnknown)
+	}
 }
