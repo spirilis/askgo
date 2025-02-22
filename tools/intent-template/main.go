@@ -69,6 +69,7 @@ func (h *%s) Handle(input askgo.HandlerInput) (*askgo.ResponseEnvelope, error) {
 `, structName, structName, i.Intent, structName, structName)
 
 	if len(i.Attributes) > 0 {
+		out += `    // Each of these should be in the Attributes struct definition\n`
 		for _, a := range i.Attributes {
 			out += fmt.Sprintf(`    %s := attributes.%s
 `, a.Variable, a.Attribute)
