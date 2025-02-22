@@ -1,0 +1,17 @@
+intent: BudgetAnalyzeTransactionsIntent
+attributes:
+- attribute: BudgetID
+  variable: budgetID
+- attribute: LastUserID
+  variable: lastUID
+slots:
+- name: ItemType
+  variable: itemType
+  type: string
+- name: TransactionCount
+  variable: txnCount
+  type: int
+- name: Amount
+  variable: amount
+  type: float64
+  default: "0.00"
