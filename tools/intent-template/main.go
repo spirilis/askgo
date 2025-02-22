@@ -88,7 +88,7 @@ func (h *%s) Handle(input askgo.HandlerInput) (*askgo.ResponseEnvelope, error) {
 		out += `
     if len(request.Intent.Slots) > 0 {
         for _, i := range request.Intent.Slots {
-            if IsSlotValidValue(i) {
+            if i.IsSlotValidValue() {
                 switch i.Name {
 `
 		for _, s := range i.Slots {
@@ -174,6 +174,10 @@ slots:
 - name: TransactionCount
   variable: txnCount
   type: int
+- name: Amount
+  variable: amount
+  type: float64
+  default: "0.00"
 `
 
 func do_help() {
