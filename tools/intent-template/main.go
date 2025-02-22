@@ -66,6 +66,7 @@ func (h *%s) Handle(input askgo.HandlerInput) (*askgo.ResponseEnvelope, error) {
     userID := input.GetRequestEnvelope().Context.System.User.UserID
     deviceID := input.GetRequestEnvelope().Context.System.Device.DeviceID
 
+    var err error
 `, structName, structName, i.Intent, structName, structName)
 
 	if len(i.Attributes) > 0 {

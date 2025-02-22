@@ -1,0 +1,6 @@
+intent: BudgetAnalyzeTransactionsIntent
+slots:
+- name: Amount
+  variable: amount
+  type: float64
+  default: "0.00"
